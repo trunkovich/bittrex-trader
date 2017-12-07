@@ -2,18 +2,18 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { BuyComponent } from './buy/buy.component';
-import { OrdersComponent } from './orders/orders.component';
+import { WalletsComponent } from './wallets/wallets.component';
 
 
 export const routes: Routes = [
   { path: '', component: BuyComponent },
-  { path: 'orders', component: OrdersComponent },
+  { path: 'wallets', component: WalletsComponent },
   { path: '**', pathMatch: 'full', redirectTo: '' }
 ];
 
 export const appComponents = [
   BuyComponent,
-  OrdersComponent
+  WalletsComponent
 ];
 
 @NgModule({

@@ -12,14 +12,12 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { AppComponent } from './app.component';
 import { BittrexService } from './bittrex.service';
 import { appComponents, AppRoutingModule } from './app.routing';
-import { OrdersComponent } from './orders/orders.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
     ...appComponents,
-    OrdersComponent
   ],
   imports: [
     BrowserModule,
