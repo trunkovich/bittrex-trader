@@ -1,33 +1,12 @@
-<mat-toolbar>Bittrex Trader</mat-toolbar>
+<mat-toolbar>
+  <mat-toolbar-row>
+    <span>Bittrex Trader</span>
+  </mat-toolbar-row>
+  <mat-toolbar-row>
+    <button mat-button [routerLink]="['/']">Buy</button>
+    <button mat-button [routerLink]="['/', 'orders']">Orders</button>
+  </mat-toolbar-row>
+</mat-toolbar>
 <mat-card>
-  <h4>{{bittrex.btcBalance}}</h4>
-
-  <form class="example-form">
-
-    <mat-form-field>
-      <input matInput
-             [formControl]="coinNameCtrl"
-             [matAutocomplete]="auto">
-      <mat-autocomplete #auto="matAutocomplete">
-        <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
-          {{ option }}
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-
-    <button mat-raised-button
-            color="primary"
-            (click)="buyCoins()"
-            [disabled]="!selectedMarket">Buy {{selectedMarket?.MarketName}}</button>
-
-  </form>
-
-  <div *ngIf="ticks$ | async; let ticks">
-    <h3 [style.color]="'red'">{{ticks.Bid}}</h3>
-    <h3 [style.color]="'green'">{{ticks.Ask}}</h3>
-    <h3>{{ticks.Last}}</h3>
-  </div>
-
-  <h2>{{order?.IsOpen}}</h2>
-
+  <router-outlet></router-outlet>
 </mat-card>

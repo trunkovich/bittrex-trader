@@ -5,17 +5,21 @@ import {
   MatAutocompleteModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule,
   MatToolbarModule
 } from '@angular/material';
-
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule } from '@angular/common/http';
+import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { AppComponent } from './app.component';
-import { HttpClientModule } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BittrexService } from './bittrex.service';
+import { appComponents, AppRoutingModule } from './app.routing';
+import { OrdersComponent } from './orders/orders.component';
 
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ...appComponents,
+    OrdersComponent
   ],
   imports: [
     BrowserModule,
@@ -28,7 +32,10 @@ import { BittrexService } from './bittrex.service';
     ReactiveFormsModule,
     FormsModule,
     HttpClientModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    FlexLayoutModule,
+
+    AppRoutingModule
   ],
   providers: [
     BittrexService
