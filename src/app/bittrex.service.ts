@@ -10,7 +10,7 @@ import 'rxjs/add/observable/throw';
 import { interval } from 'rxjs/observable/interval';
 
 import {
-  Balance, BuyCoinResponse, GetBTCBalanceResponse, GetMarketResponse, GetOrderResponse, GetTickerResponse, Market,
+  Balance, BuyCoinResponse, GetBalanceResponse, GetBalancesResponse, GetMarketResponse, GetOrderResponse, GetTickerResponse, Market,
   Ticks
 } from './bittrex.model';
 import { ApiKey, ApiPrivate } from '../config';
@@ -56,9 +56,18 @@ export class BittrexService {
   getBtcAmount(): Observable<number> {
     return this.secureRequest('get', 'https://bittrex.com/api/v1.1/account/getbalance', {currency: 'BTC'})
       .pipe(
-        filter((response: GetBTCBalanceResponse) => response.success),
-        map((response: GetBTCBalanceResponse) => response.result),
+        filter((response: GetBalanceResponse) => response.success),
+        map((response: GetBalanceResponse) => response.result),
         map((btcBalance: Balance) => btcBalance.Available)
+      );
+  }
+
+  getBalances(): Observable<any> {
+    return this.secureRequest('get', 'https://bittrex.com/api/v1.1/account/getbalances')
+      .pipe(
+        filter((response: GetBalancesResponse) => response.success),
+        map((response: GetBalancesResponse) => response.result),
+        map(balances => _.filter(balances, (balance: Balance) => balance.Balance))
       );
   }
 

@@ -1,4 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { BittrexService } from '../bittrex.service';
+import { Balance } from '../bittrex.model';
 
 @Component({
   selector: 'app-wallets',
@@ -7,10 +9,13 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
   encapsulation: ViewEncapsulation.None
 })
 export class WalletsComponent implements OnInit {
+  balances: Balance[];
 
-  constructor() { }
+  constructor(private bittrex: BittrexService) { }
 
   ngOnInit() {
+    this.bittrex.getBalances()
+      .subscribe((balances) => this.balances = balances);
   }
 
 }

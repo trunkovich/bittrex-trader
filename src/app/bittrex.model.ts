@@ -12,8 +12,12 @@ export interface GetTickerResponse extends BittrexResponse {
   result: Ticks;
 }
 
-export interface GetBTCBalanceResponse extends BittrexResponse {
+export interface GetBalanceResponse extends BittrexResponse {
   result: Balance;
+}
+
+export interface GetBalancesResponse extends BittrexResponse {
+  result: Balance[];
 }
 
 export interface GetOrderResponse extends BittrexResponse {
@@ -48,6 +52,7 @@ export interface Balance {
   Pending: number; // 0.00000000,
   CryptoAddress: string; // 1MacMr6715hjds342dXuLqXcju6fgwHA31,
   Requested: boolean; // false,
+  uuid: string | null;
 }
 
 export interface Order {

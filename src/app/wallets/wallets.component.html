@@ -1,3 +1,5 @@
-<p>
-  wallets works!
-</p>
+<mat-list>
+  <mat-list-item *ngFor="let balance of balances">
+    <button mat-button [routerLink]="['/', 'currency', balance.Currency]">{{balance.Currency}}</button>
+  </mat-list-item>
+</mat-list>
