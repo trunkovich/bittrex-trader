@@ -1,6 +1,14 @@
 <mat-toolbar>
   <mat-toolbar-row>
-    <span>Bittrex Trader</span>
+    <div fxLayout="row" fxLayoutAlign="space-between center" [style.width]="'100%'">
+      <span>Bittrex Trader</span>
+      <div fxLayout="row" fxLayoutAlign="center center">
+        <span>{{bittrex.btcBalance}}</span>
+        <button mat-icon-button (click)="bittrex.updateBtcAmount()">
+          <mat-icon aria-label="Example icon-button with a heart icon">refresh</mat-icon>
+        </button>
+      </div>
+    </div>
   </mat-toolbar-row>
   <mat-toolbar-row>
     <button mat-button [routerLink]="['/']">Buy</button>

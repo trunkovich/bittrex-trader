@@ -62,6 +62,11 @@ export class BittrexService {
       );
   }
 
+  updateBtcAmount() {
+    this.getBtcAmount()
+      .subscribe((balance) => this.btcBalance = balance);
+  }
+
   getMarkets(): Observable<string[]> {
     return this.http.get('https://bittrex.com/api/v1.1/public/getmarkets')
       .pipe(
