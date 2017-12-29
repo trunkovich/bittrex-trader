@@ -8,6 +8,7 @@ import { of } from 'rxjs/observable/of';
 import 'rxjs/add/operator/retryWhen';
 import 'rxjs/add/operator/retry';
 import 'rxjs/add/operator/delay';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-buy',
@@ -23,7 +24,7 @@ export class BuyComponent implements OnInit {
   selectedMarket: Market;
   order: Order;
 
-  constructor(public bittrex: BittrexService) {}
+  constructor(public bittrex: BittrexService, public router: Router) {}
 
   ngOnInit() {
 
@@ -60,13 +61,13 @@ export class BuyComponent implements OnInit {
     if (this.selectedMarket) {
       this.bittrex.buyCoin(this.selectedMarket)
         .subscribe(
-          (uuid) => this.controlOrder(uuid),
+          (uuid) => this.controlOrder(uuid, this.selectedMarket),
           (error) => console.error(error)
         );
     }
   }
 
-  controlOrder(uuid) {
+  controlOrder(uuid, selectedMarket: Market) {
     this.bittrex.getOrder(uuid)
       .pipe(
         tap(order => this.order = order),
@@ -79,6 +80,15 @@ export class BuyComponent implements OnInit {
         })
       )
       .retryWhen((error) => error.delay(1000).retry(5))
-      .subscribe(() => alert('order finished'));
+      .subscribe(() => {
+        this.router.navigate(['/', 'currency', selectedMarket.MarketCurrency]);
+      });
+  }
+
+  cancelOrder() {
+    if (this.order) {
+      this.bittrex.cancelOrder(this.order.OrderUuid)
+        .subscribe();
+    }
   }
 }

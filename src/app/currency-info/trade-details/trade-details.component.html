@@ -1,0 +1,47 @@
+<div class="trade-container">
+  <p>Finished: {{trade.finished ? 'Yes' : 'No'}}</p>
+  <p>Profit: {{trade.profitLoss}}</p>
+
+  <mat-table #table [dataSource]="dataSource">
+
+    <ng-container matColumnDef="Closed">
+      <mat-header-cell *matHeaderCellDef> Closed </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{order.Closed | amDateFormat:'D/M/YYYY HH:mm:ss'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Opened">
+      <mat-header-cell *matHeaderCellDef> Opened </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{order.TimeStamp | amDateFormat:'D/M/YYYY HH:mm:ss'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Type">
+      <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{order.OrderType}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Limit">
+      <mat-header-cell *matHeaderCellDef> Limit </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{order.Limit | number:'1.8-8':'ru'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Price">
+      <mat-header-cell *matHeaderCellDef> Price </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{order.Price | number:'1.8-8':'ru'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Actual Rate">
+      <mat-header-cell *matHeaderCellDef> Actual Rate </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{(order.Price / (order.Quantity - order.QuantityRemaining)) | number:'1.8-8':'ru'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Quantity">
+      <mat-header-cell *matHeaderCellDef> Quantity </mat-header-cell>
+      <mat-cell *matCellDef="let order"> {{(order.Quantity - order.QuantityRemaining) | number:'1.8-8':'ru'}} </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+  </mat-table>
+
+</div>

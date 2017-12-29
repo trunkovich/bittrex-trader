@@ -10,11 +10,17 @@ import 'rxjs/add/observable/throw';
 import { interval } from 'rxjs/observable/interval';
 
 import {
-  Balance, BuyCoinResponse, GetBalanceResponse, GetBalancesResponse, GetMarketResponse, GetOrderResponse, GetTickerResponse, Market,
-  Ticks
+  Balance, BittrexResponse, BuyCoinResponse, GetBalanceResponse, GetBalancesResponse, GetMarketResponse, GetOrderResponse,
+  GetOrdersHistoryResponse,
+  GetOrdersResponse,
+  GetTickerResponse, HistoryOrder, Market, Order,
+  Ticks, Trade
 } from './bittrex.model';
 import { ApiKey, ApiPrivate } from '../config';
 import { timer } from 'rxjs/observable/timer';
+import { forkJoin } from 'rxjs/observable/forkJoin';
+
+export const API_URL = 'https://bittrex.com/api/v1.1';
 
 @Injectable()
 export class BittrexService {
@@ -28,15 +34,13 @@ export class BittrexService {
         switchMap(() => this.getBtcAmount())
       )
       .subscribe((balance: number) => this.btcBalance = balance);
-
-    // this.getOrder('848c11ce-9710-4ef1-8480-32bb6464a030');
   }
 
   secureRequest(method: string, url: string, extra: {} = {}) {
     const apikey = ApiKey;
     const apisecret = ApiPrivate;
     const nonce = (new Date()).getTime().toString();
-    let signUrl = `${url}?`; // `https://bittrex.com/api/v1.1/account/getbalances?apikey=${apikey}&nonce=${nonce}`;
+    let signUrl = `${url}?`;
     const params = _.merge(extra, {apikey, nonce});
     _.each(_.keys(params), (key, i) => {
       const value = params[key];
@@ -54,16 +58,22 @@ export class BittrexService {
   }
 
   getBtcAmount(): Observable<number> {
-    return this.secureRequest('get', 'https://bittrex.com/api/v1.1/account/getbalance', {currency: 'BTC'})
+    return this.getBalance('BTC')
       .pipe(
-        filter((response: GetBalanceResponse) => response.success),
-        map((response: GetBalanceResponse) => response.result),
         map((btcBalance: Balance) => btcBalance.Available)
       );
   }
 
+  getBalance(currency: string): Observable<Balance> {
+    return this.secureRequest('get', `${API_URL}/account/getbalance`, {currency})
+      .pipe(
+        filter((response: GetBalanceResponse) => response.success),
+        map((response: GetBalanceResponse) => response.result),
+      );
+  }
+
   getBalances(): Observable<any> {
-    return this.secureRequest('get', 'https://bittrex.com/api/v1.1/account/getbalances')
+    return this.secureRequest('get', `${API_URL}/account/getbalances`)
       .pipe(
         filter((response: GetBalancesResponse) => response.success),
         map((response: GetBalancesResponse) => response.result),
@@ -77,7 +87,7 @@ export class BittrexService {
   }
 
   getMarkets(): Observable<string[]> {
-    return this.http.get('https://bittrex.com/api/v1.1/public/getmarkets')
+    return this.http.get(`${API_URL}/public/getmarkets`)
       .pipe(
         filter((response: GetMarketResponse) => response.success),
         map((response: GetMarketResponse) => response.result),
@@ -88,7 +98,7 @@ export class BittrexService {
   }
 
   getTicks(market: Market): Observable<Ticks> {
-    return this.http.get('https://bittrex.com/api/v1.1/public/getticker', {
+    return this.http.get(`${API_URL}/public/getticker`, {
         params: {market: market.MarketName}
       })
       .pipe(
@@ -98,17 +108,25 @@ export class BittrexService {
       );
   }
 
+  sellCoin(market: Market, quantity: number, rate: number): Observable<any> {
+    return this.secureRequest(
+      'get',
+      `${API_URL}/market/selllimit`,
+      {market: market.MarketName, quantity, rate}
+    );
+  }
+
   buyCoin(market: Market): Observable<any> {
     if (this.ticksByCoinName[market.MarketCurrency]) {
       return of(this.ticksByCoinName[market.MarketCurrency])
         .pipe(
           map((ticks: Ticks) => ticks.Last),
           map((tick: string) => parseFloat(tick)),
-          map((tick: number) => tick * 1.1),
+          map((tick: number) => tick * 1.05),
           switchMap((price: number) => {
             return this.secureRequest(
               'get',
-              'https://bittrex.com/api/v1.1/market/buylimit',
+              `${API_URL}/market/buylimit`,
               {market: market.MarketName, quantity: (this.btcBalance * 0.99) / price, rate: price}
               );
           }),
@@ -126,7 +144,7 @@ export class BittrexService {
   }
 
   getOrder(uuid: string) {
-    return this.secureRequest('get', 'https://bittrex.com/api/v1.1/account/getorder', {uuid})
+    return this.secureRequest('get', `${API_URL}/account/getorder`, {uuid})
       .pipe(
         map((response: GetOrderResponse) => response.result)
       );
@@ -138,6 +156,100 @@ export class BittrexService {
     } else {
       return null;
     }
+  }
+
+  getOpenOrders(market: string): Observable<Order[]> {
+    return this.secureRequest('get', `${API_URL}/market/getopenorders`, {market})
+      .pipe(
+        map((response: GetOrdersResponse) => response.result)
+      );
+  }
+
+  getOrdersHistory(market: string): Observable<HistoryOrder[]> {
+    return this.secureRequest('get', `${API_URL}/account/getorderhistory`, {market})
+      .pipe(
+        map((response: GetOrdersHistoryResponse) => response.result)
+      );
+  }
+
+  getTrades(market: string): Observable<Trade[]> {
+    return this.getOrdersHistory(market).pipe(
+      map((orders: HistoryOrder[]) => _.reverse(orders)),
+      map((orders: HistoryOrder[]) => {
+        const trades: Trade[] = [];
+        _.each(orders, (order: HistoryOrder, index: number) => {
+          let trade: Trade;
+          if (order.OrderType === 'LIMIT_BUY' && (index === 0 || orders[index - 1].OrderType !== 'LIMIT_BUY')) {
+            trade = {
+              orders: [order],
+              finished: false,
+              volume: order.Price,
+              buyPrice: order.Price / (order.Quantity - order.QuantityRemaining),
+              profitLoss: 0,
+              startDateTime: order.Closed,
+              endDateTime: null,
+              profit: 0,
+              boughtCoins: order.Quantity - order.QuantityRemaining,
+              soldCoins: 0,
+              currentProfitLoss: 0
+            };
+          } else {
+            trade = trades.pop();
+            const filled1 = order.Quantity - order.QuantityRemaining;
+            trade.orders.unshift(order);
+            if (order.OrderType === 'LIMIT_BUY') {
+              trade.volume += order.Price;
+              const prOrder = orders[index - 1];
+              const vol = order.Price + prOrder.Price;
+              const filled2 = prOrder.Quantity - prOrder.QuantityRemaining;
+              trade.buyPrice = vol / (filled1 + filled2);
+              trade.boughtCoins += filled1;
+            } else {
+              trade.profit += order.Price - order.Commission;
+              trade.soldCoins += filled1;
+              if (index === (orders.length - 1) || orders[index + 1].OrderType !== 'LIMIT_SELL') {
+                trade.finished = trade.soldCoins.toFixed(3) === trade.boughtCoins.toFixed(3);
+                trade.profitLoss = trade.profit / (trade.volume * (trade.soldCoins / trade.boughtCoins));
+                trade.endDateTime = trade.finished ? order.Closed : null;
+              }
+            }
+          }
+          trades.push(trade);
+        });
+        return _.reverse(trades);
+      })
+    );
+  }
+
+  putSellOrders(market: Market) {
+    return this.getOrdersHistory(market.MarketName)
+      .pipe(
+        map((orders: HistoryOrder[]) => orders[0]),
+        switchMap((order: HistoryOrder) => {
+          const price = order.PricePerUnit;
+          let coins = order.Quantity;
+          const price1 = price * 1.03;
+          const coins1 = coins * 0.2;
+          coins -= coins1;
+          const price2 = price * 1.04;
+          const coins2 = coins * 0.3;
+          coins -= coins2;
+          // const price3 = price * 1.04;
+          // const coins3 = coins;
+          return forkJoin([
+            this.sellCoin(market, coins1, price1),
+            this.sellCoin(market, coins2, price2),
+            // this.sellCoin(market, coins3, price3)
+          ]);
+        })
+      );
+  }
+
+  cancelOrder(uuid: string) {
+    return this.secureRequest('get', `${API_URL}/market/cancel`, {uuid})
+      .pipe(
+        map((response: BittrexResponse) => response.result)
+      );
   }
 
 }

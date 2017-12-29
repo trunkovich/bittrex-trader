@@ -1,0 +1,16 @@
+<div fxLayout="row" fxLayoutAlign="center center" *ngIf="loading">
+  <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+</div>
+
+<div *ngIf="!loading">
+  <button mat-raised-button
+          color="primary"
+          (click)="putSellOrders()">Put sell orders</button>
+  <div *ngFor="let trade of trades">
+    <app-trade-details [trade]="trade"></app-trade-details>
+  </div>
+</div>
+
+<!--<div class="orders-history" *ngIf="!loading">-->
+
+<!--</div>-->

@@ -16,6 +16,11 @@
           (click)="buyCoins()"
           [disabled]="!selectedMarket">Buy {{selectedMarket?.MarketName}}</button>
 
+  <button mat-raised-button
+          *ngIf="order"
+          color="primary"
+          (click)="cancelOrder()">Cancel order</button>
+
 </form>
 
 <div *ngIf="ticks$ | async; let ticks">
